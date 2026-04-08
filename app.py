@@ -199,6 +199,19 @@ st.markdown("""
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     header {visibility: hidden;}
+
+    /* Keep sidebar toggle button visible even when header is hidden */
+    button[data-testid="collapsedControl"] {
+        visibility: visible !important;
+        z-index: 9999 !important;
+        position: fixed !important;
+        top: 8px !important;
+        left: 8px !important;
+    }
+    div[data-testid="collapsedControl"] {
+        visibility: visible !important;
+        z-index: 9999 !important;
+    }
 </style>
 """, unsafe_allow_html=True)
 
