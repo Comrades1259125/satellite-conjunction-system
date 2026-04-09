@@ -198,9 +198,19 @@ st.markdown("""
     /* Hide Streamlit components */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
-    header {visibility: hidden;}
+    header[data-testid="stHeader"] {
+        background: transparent !important;
+        height: 0 !important;
+        min-height: 0 !important;
+        overflow: visible !important;
+        border: none !important;
+        box-shadow: none !important;
+    }
+    header[data-testid="stHeader"] > div:first-child {
+        background: transparent !important;
+    }
 
-    /* Keep sidebar toggle button visible even when header is hidden */
+    /* Sidebar toggle button always visible and clickable */
     button[data-testid="collapsedControl"] {
         visibility: visible !important;
         z-index: 9999 !important;
@@ -211,6 +221,7 @@ st.markdown("""
     div[data-testid="collapsedControl"] {
         visibility: visible !important;
         z-index: 9999 !important;
+        overflow: visible !important;
     }
 </style>
 """, unsafe_allow_html=True)
