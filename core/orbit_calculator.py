@@ -1,6 +1,6 @@
 """
 Orbit Calculator Module
-Computes satellite positions (ITRF x, y, z) over a time span.
+Computes satellite positions (GCRS x, y, z) over a time span.
 """
 
 import numpy as np
@@ -10,7 +10,7 @@ from datetime import datetime, timedelta, timezone
 
 def compute_positions(satellite, ts, time_array):
     """
-    Compute ITRF (x, y, z) positions for a satellite over a time array.
+    Compute GCRS (x, y, z) positions for a satellite over a time array.
 
     Args:
         satellite: EarthSatellite object
@@ -21,14 +21,14 @@ def compute_positions(satellite, ts, time_array):
         positions: numpy array of shape (N, 3) in km
     """
     geocentric = satellite.at(time_array)
-    # Get ITRF position in km
+    # Get GCRS position in km
     pos = geocentric.position.km  # shape (3, N)
     return pos.T  # shape (N, 3)
 
 
 def compute_velocities(satellite, ts, time_array):
     """
-    Compute ITRF velocities for a satellite over a time array.
+    Compute GCRS velocities for a satellite over a time array.
 
     Args:
         satellite: EarthSatellite object

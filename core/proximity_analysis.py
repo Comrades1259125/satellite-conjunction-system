@@ -4,7 +4,6 @@ Computes distances, closest approach, relative velocity, and collision probabili
 """
 
 import numpy as np
-from scipy.stats import norm
 
 
 def compute_distances(positions_1, positions_2):
@@ -181,6 +180,7 @@ def generate_covariance_heatmap_data(
     distances,
     datetimes,
     base_uncertainty_km=0.1,
+    combined_radius_km=0.01,
     uncertainty_growth_rate=0.001,
 ):
     """
@@ -216,7 +216,7 @@ def generate_covariance_heatmap_data(
     for i, sigma in enumerate(uncertainty_levels):
         for j, d in enumerate(sub_distances):
             heatmap_data[i, j] = compute_collision_probability(
-                d, sigma, combined_radius_km=0.01
+                d, sigma, combined_radius_km=combined_radius_km
             )
 
     return heatmap_data, uncertainty_levels, time_indices

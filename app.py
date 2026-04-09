@@ -367,13 +367,13 @@ if run_analysis:
 
         # ── Compute positions & velocities ──
         with st.spinner("📡 Computing orbital positions..."):
-            progress = st.progress(0, text="Computing SAT-1 positions...")
+            progress = st.progress(0, text=f"Computing {sat1_name} positions...")
             pos1 = compute_positions(sat1, ts, time_array)
-            progress.progress(25, text="Computing SAT-2 positions...")
+            progress.progress(25, text=f"Computing {sat2_name} positions...")
             pos2 = compute_positions(sat2, ts, time_array)
-            progress.progress(50, text="Computing SAT-1 velocities...")
+            progress.progress(50, text=f"Computing {sat1_name} velocities...")
             vel1 = compute_velocities(sat1, ts, time_array)
-            progress.progress(75, text="Computing SAT-2 velocities...")
+            progress.progress(75, text=f"Computing {sat2_name} velocities...")
             vel2 = compute_velocities(sat2, ts, time_array)
             progress.progress(100, text="✅ Positions computed!")
 
@@ -399,7 +399,7 @@ if run_analysis:
 
             # Heatmap data
             heatmap_data, uncertainty_levels, time_indices = generate_covariance_heatmap_data(
-                distances, datetimes_list, position_uncertainty
+                distances, datetimes_list, position_uncertainty, combined_radius
             )
 
         # ── Clear progress bar ──
