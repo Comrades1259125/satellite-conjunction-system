@@ -43,6 +43,7 @@ from ui.alerts import (
     render_telemetry_table,
     render_metric_cards,
 )
+from core.translations import t
 
 
 # ─── Page Configuration ───────────────────────────────────────────────────────
@@ -215,7 +216,7 @@ st.markdown("""
         visibility: visible !important;
         z-index: 9999 !important;
         position: fixed !important;
-        top: 8px !important;
+        top: 160px !important;
         left: 8px !important;
     }
     div[data-testid="collapsedControl"] {
@@ -227,12 +228,19 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 
+# ─── Language State ─────────────────────────────────────────────────────────
+
+if "lang" not in st.session_state:
+    st.session_state.lang = "en"
+
+L = st.session_state.lang  # shortcut
+
 # ─── Header ───────────────────────────────────────────────────────────────────
 
-st.markdown("""
+st.markdown(f"""
 <div class="main-header">
-    <h1>🛰️ Satellite Conjunction Analysis</h1>
-    <p>Real-time Proximity Assessment & Collision Probability</p>
+    <h1>{t("app_title", L)}</h1>
+    <p>{t("app_subtitle", L)}</p>
 </div>
 """, unsafe_allow_html=True)
 
@@ -240,105 +248,122 @@ st.markdown("""
 # ─── Sidebar Configuration ────────────────────────────────────────────────────
 
 with st.sidebar:
-    st.markdown("## 🎛️ Configuration")
+    # Language toggle at the very top
+    lang_choice = st.selectbox(
+        t("language_label", L),
+        ["English", "ภาษาไทย"],
+        index=0 if st.session_state.lang == "en" else 1,
+        key="lang_select",
+    )
+    new_lang = "en" if lang_choice == "English" else "th"
+    if new_lang != st.session_state.lang:
+        st.session_state.lang = new_lang
+        st.rerun()
+
+    L = st.session_state.lang  # refresh after potential rerun
+
+    st.markdown('<div class="glow-divider"></div>', unsafe_allow_html=True)
+    st.markdown(t("config_title", L))
     st.markdown('<div class="glow-divider"></div>', unsafe_allow_html=True)
 
     # Input mode
+    catalog_label = t("catalog_selection", L)
+    manual_label = t("manual_tle", L)
     input_mode = st.radio(
-        "Input Mode",
-        ["Catalog Selection", "Manual TLE Entry"],
+        t("input_mode", L),
+        [catalog_label, manual_label],
         index=0,
-        help="Select satellites from the catalog or enter custom TLE data.",
+        help=t("input_mode_help", L),
     )
 
-    if input_mode == "Catalog Selection":
+    if input_mode == catalog_label:
         satellites = get_available_satellites()
         sat1_name = st.selectbox(
-            "🛰️ Primary Satellite",
+            t("primary_satellite", L),
             satellites,
             index=satellites.index("ISS (ZARYA)") if "ISS (ZARYA)" in satellites else 0,
         )
         sat2_name = st.selectbox(
-            "🛰️ Secondary Satellite",
+            t("secondary_satellite", L),
             satellites,
             index=satellites.index("COSMOS 2251 DEB") if "COSMOS 2251 DEB" in satellites else 1,
         )
         custom_tle = False
     else:
-        st.markdown("#### Primary Satellite")
-        sat1_name = st.text_input("Name (Primary)", value="SAT-1")
+        st.markdown(t("primary_header", L))
+        sat1_name = st.text_input(t("primary_name", L), value="SAT-1")
         sat1_line1 = st.text_area(
-            "TLE Line 1 (Primary)",
+            t("tle_line1_primary", L),
             value="1 25544U 98067A   24045.54689014  .00024329  00000+0  42556-3 0  9992",
             height=68,
         )
         sat1_line2 = st.text_area(
-            "TLE Line 2 (Primary)",
+            t("tle_line2_primary", L),
             value="2 25544  51.6410 138.2047 0002273 315.2168 162.4950 15.50562470439891",
             height=68,
         )
 
-        st.markdown("#### Secondary Satellite")
-        sat2_name = st.text_input("Name (Secondary)", value="SAT-2")
+        st.markdown(t("secondary_header", L))
+        sat2_name = st.text_input(t("secondary_name", L), value="SAT-2")
         sat2_line1 = st.text_area(
-            "TLE Line 1 (Secondary)",
+            t("tle_line1_secondary", L),
             value="1 34427U 93036SX  24041.83168981  .00000516  00000+0  16370-3 0  9994",
             height=68,
         )
         sat2_line2 = st.text_area(
-            "TLE Line 2 (Secondary)",
+            t("tle_line2_secondary", L),
             value="2 34427  74.0202 280.9182 0039927 149.3476 210.9684 14.35878847607451",
             height=68,
         )
         custom_tle = True
 
     st.markdown('<div class="glow-divider"></div>', unsafe_allow_html=True)
-    st.markdown("## ⏱️ Analysis Window")
+    st.markdown(t("analysis_window", L))
 
     duration_hours = st.slider(
-        "Duration (hours)",
+        t("duration_label", L),
         min_value=1,
         max_value=72,
         value=24,
         step=1,
-        help="Duration of the analysis window.",
+        help=t("duration_help", L),
     )
 
     step_minutes = st.slider(
-        "Time Step (minutes)",
+        t("timestep_label", L),
         min_value=1,
         max_value=10,
         value=1,
         step=1,
-        help="Resolution of the time steps.",
+        help=t("timestep_help", L),
     )
 
     st.markdown('<div class="glow-divider"></div>', unsafe_allow_html=True)
-    st.markdown("## 📐 Covariance Settings")
+    st.markdown(t("covariance_title", L))
 
     position_uncertainty = st.number_input(
-        "Position Uncertainty σ (km)",
+        t("pos_uncertainty_label", L),
         min_value=0.001,
         max_value=10.0,
         value=0.1,
         step=0.01,
         format="%.3f",
-        help="Combined 1-sigma position uncertainty for both objects.",
+        help=t("pos_uncertainty_help", L),
     )
 
     combined_radius = st.number_input(
-        "Combined Hard-Body Radius (km)",
+        t("combined_radius_label", L),
         min_value=0.001,
         max_value=1.0,
         value=0.01,
         step=0.001,
         format="%.3f",
-        help="Sum of the physical radii of both objects.",
+        help=t("combined_radius_help", L),
     )
 
     st.markdown('<div class="glow-divider"></div>', unsafe_allow_html=True)
 
-    run_analysis = st.button("🚀 RUN CONJUNCTION ANALYSIS", use_container_width=True)
+    run_analysis = st.button(t("run_button", L), use_container_width=True)
 
     st.markdown(f"""
     <div style="
@@ -349,7 +374,7 @@ with st.sidebar:
         margin-top: 16px;
     ">
         Analysis time: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')}<br>
-        Powered by Skyfield + Plotly
+        {t("powered_by", L)}
     </div>
     """, unsafe_allow_html=True)
 
@@ -359,7 +384,7 @@ with st.sidebar:
 if run_analysis:
     try:
         # ── Load satellites ──
-        with st.spinner("🔄 Loading satellite TLE data..."):
+        with st.spinner(t("loading_tle", L)):
             ts = load.timescale()
 
             if custom_tle:
@@ -369,27 +394,27 @@ if run_analysis:
                 sat1 = get_satellite(sat1_name, ts)
                 sat2 = get_satellite(sat2_name, ts)
 
-        st.success(f"✅ Loaded: **{sat1_name}** & **{sat2_name}**")
+        st.success(t("loaded_success", L, sat1=sat1_name, sat2=sat2_name))
 
         # ── Generate time array ──
-        with st.spinner(f"⏳ Generating {duration_hours}h timeline ({step_minutes}min steps)..."):
+        with st.spinner(t("generating_timeline", L, hours=duration_hours, step=step_minutes)):
             time_array, datetimes_list = generate_time_array(ts, duration_hours, step_minutes)
             total_steps = len(datetimes_list)
 
         # ── Compute positions & velocities ──
-        with st.spinner("📡 Computing orbital positions..."):
-            progress = st.progress(0, text=f"Computing {sat1_name} positions...")
+        with st.spinner(t("computing_positions", L)):
+            progress = st.progress(0, text=t("computing_sat_pos", L, name=sat1_name))
             pos1 = compute_positions(sat1, ts, time_array)
-            progress.progress(25, text=f"Computing {sat2_name} positions...")
+            progress.progress(25, text=t("computing_sat_pos", L, name=sat2_name))
             pos2 = compute_positions(sat2, ts, time_array)
-            progress.progress(50, text=f"Computing {sat1_name} velocities...")
+            progress.progress(50, text=t("computing_sat_vel", L, name=sat1_name))
             vel1 = compute_velocities(sat1, ts, time_array)
-            progress.progress(75, text=f"Computing {sat2_name} velocities...")
+            progress.progress(75, text=t("computing_sat_vel", L, name=sat2_name))
             vel2 = compute_velocities(sat2, ts, time_array)
-            progress.progress(100, text="✅ Positions computed!")
+            progress.progress(100, text=t("positions_done", L))
 
         # ── Proximity analysis ──
-        with st.spinner("📏 Analyzing proximity..."):
+        with st.spinner(t("analyzing_proximity", L)):
             distances = compute_distances(pos1, pos2)
             closest = find_closest_approach(distances, datetimes_list)
             rel_vel = compute_relative_velocity(vel1, vel2, closest["index"])
@@ -416,17 +441,14 @@ if run_analysis:
         # ── Clear progress bar ──
         progress.empty()
 
-        # ═══════════════════════════════════════════════════════════════════
-        # RESULTS
-        # ═══════════════════════════════════════════════════════════════════
-
         st.markdown('<div class="glow-divider"></div>', unsafe_allow_html=True)
 
-        # ── Risk Banner ──
-        render_risk_banner(risk_name, risk_color, risk_emoji, closest["distance_km"])
+        # ── Risk Banner (translated) ──
+        risk_display = t(f"risk_{risk_name.lower()}", L)
+        render_risk_banner(risk_display, risk_color, risk_emoji, closest["distance_km"], t("min_distance_label", L))
 
-        # ── Metric Cards ──
-        render_metric_cards(closest, rel_vel, (risk_name, risk_color, risk_emoji))
+        # ── Metric Cards (translated) ──
+        render_metric_cards(closest, rel_vel, (risk_display, risk_color, risk_emoji), L)
 
         st.markdown('<div class="glow-divider"></div>', unsafe_allow_html=True)
 
@@ -442,7 +464,7 @@ if run_analysis:
                 text-align: center;
             ">
                 <div style="font-size: 12px; color: #546E7A; text-transform: uppercase; letter-spacing: 1px;">
-                    Collision Probability @ TCA
+                    {t("pc_at_tca_title", L)}
                 </div>
                 <div style="
                     font-size: clamp(20px, 4vw, 28px); font-weight: 800;
@@ -469,7 +491,7 @@ if run_analysis:
                 text-align: center;
             ">
                 <div style="font-size: 12px; color: #546E7A; text-transform: uppercase; letter-spacing: 1px;">
-                    Max Collision Probability (window)
+                    {t("max_pc_title", L)}
                 </div>
                 <div style="
                     font-size: clamp(20px, 4vw, 28px); font-weight: 800;
@@ -480,7 +502,7 @@ if run_analysis:
                     {max_pc:.4e}
                 </div>
                 <div style="font-size: 11px; color: #78909C; margin-top: 4px;">
-                    Over {duration_hours}h analysis window
+                    {t("over_window", L, hours=duration_hours)}
                 </div>
             </div>
             """, unsafe_allow_html=True)
@@ -488,29 +510,29 @@ if run_analysis:
         st.markdown('<div class="glow-divider"></div>', unsafe_allow_html=True)
 
         # ── Graph 1: Distance Over Time ──
-        st.markdown('<div class="section-title">📡 Distance Over Time</div>', unsafe_allow_html=True)
-        fig_distance = create_distance_chart(datetimes_list, distances, closest)
+        st.markdown(f'<div class="section-title">{t("distance_section", L)}</div>', unsafe_allow_html=True)
+        fig_distance = create_distance_chart(datetimes_list, distances, closest, L)
         st.plotly_chart(fig_distance, use_container_width=True, key="distance_chart")
 
         # ── Graph 2: Collision Probability Heatmap ──
-        st.markdown('<div class="section-title">🎯 Collision Probability Heatmap</div>', unsafe_allow_html=True)
-        fig_heatmap = create_collision_heatmap(heatmap_data, uncertainty_levels, time_indices, datetimes_list)
+        st.markdown(f'<div class="section-title">{t("heatmap_section", L)}</div>', unsafe_allow_html=True)
+        fig_heatmap = create_collision_heatmap(heatmap_data, uncertainty_levels, time_indices, datetimes_list, L)
         st.plotly_chart(fig_heatmap, use_container_width=True, key="heatmap_chart")
 
         # ── Graph 3: 3D Relative Orbit ──
-        st.markdown('<div class="section-title">🌐 3D Relative Orbit (RIC Frame)</div>', unsafe_allow_html=True)
-        fig_3d = create_3d_relative_orbit(relative_ric, closest["index"])
+        st.markdown(f'<div class="section-title">{t("ric_section", L)}</div>', unsafe_allow_html=True)
+        fig_3d = create_3d_relative_orbit(relative_ric, closest["index"], L)
         st.plotly_chart(fig_3d, use_container_width=True, key="3d_orbit_chart")
 
         st.markdown('<div class="glow-divider"></div>', unsafe_allow_html=True)
 
         # ── Telemetry Table ──
-        st.markdown('<div class="section-title">📊 Telemetry Summary</div>', unsafe_allow_html=True)
-        render_telemetry_table(closest, rel_vel, sat1_name, sat2_name)
+        st.markdown(f'<div class="section-title">{t("telemetry_section", L)}</div>', unsafe_allow_html=True)
+        render_telemetry_table(closest, rel_vel, sat1_name, sat2_name, L)
 
         # ── Altitude info ──
         st.markdown('<div class="glow-divider"></div>', unsafe_allow_html=True)
-        st.markdown('<div class="section-title">🌍 Orbital Parameters at TCA</div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="section-title">{t("orbital_section", L)}</div>', unsafe_allow_html=True)
 
         alt1 = compute_orbital_elements(sat1, ts, time_array)
         alt2 = compute_orbital_elements(sat2, ts, time_array)
@@ -530,11 +552,11 @@ if run_analysis:
                     🛰️ {sat1_name}
                 </div>
                 <div style="color: #B0BEC5; font-family: 'JetBrains Mono', monospace; font-size: 13px; line-height: 2;">
-                    Altitude @ TCA: <span style="color: #00E5FF;">{alt1[ca_idx]:.2f} km</span><br>
-                    Position X: <span style="color: #80CBC4;">{pos1[ca_idx, 0]:.3f} km</span><br>
-                    Position Y: <span style="color: #80CBC4;">{pos1[ca_idx, 1]:.3f} km</span><br>
-                    Position Z: <span style="color: #80CBC4;">{pos1[ca_idx, 2]:.3f} km</span><br>
-                    Velocity: <span style="color: #FF9100;">{np.linalg.norm(vel1[ca_idx]):.4f} km/s</span>
+                    {t("altitude_tca", L)}: <span style="color: #00E5FF;">{alt1[ca_idx]:.2f} km</span><br>
+                    {t("position_x", L)}: <span style="color: #80CBC4;">{pos1[ca_idx, 0]:.3f} km</span><br>
+                    {t("position_y", L)}: <span style="color: #80CBC4;">{pos1[ca_idx, 1]:.3f} km</span><br>
+                    {t("position_z", L)}: <span style="color: #80CBC4;">{pos1[ca_idx, 2]:.3f} km</span><br>
+                    {t("velocity", L)}: <span style="color: #FF9100;">{np.linalg.norm(vel1[ca_idx]):.4f} km/s</span>
                 </div>
             </div>
             """, unsafe_allow_html=True)
@@ -551,11 +573,11 @@ if run_analysis:
                     🛰️ {sat2_name}
                 </div>
                 <div style="color: #B0BEC5; font-family: 'JetBrains Mono', monospace; font-size: 13px; line-height: 2;">
-                    Altitude @ TCA: <span style="color: #B388FF;">{alt2[ca_idx]:.2f} km</span><br>
-                    Position X: <span style="color: #CE93D8;">{pos2[ca_idx, 0]:.3f} km</span><br>
-                    Position Y: <span style="color: #CE93D8;">{pos2[ca_idx, 1]:.3f} km</span><br>
-                    Position Z: <span style="color: #CE93D8;">{pos2[ca_idx, 2]:.3f} km</span><br>
-                    Velocity: <span style="color: #FF9100;">{np.linalg.norm(vel2[ca_idx]):.4f} km/s</span>
+                    {t("altitude_tca", L)}: <span style="color: #B388FF;">{alt2[ca_idx]:.2f} km</span><br>
+                    {t("position_x", L)}: <span style="color: #CE93D8;">{pos2[ca_idx, 0]:.3f} km</span><br>
+                    {t("position_y", L)}: <span style="color: #CE93D8;">{pos2[ca_idx, 1]:.3f} km</span><br>
+                    {t("position_z", L)}: <span style="color: #CE93D8;">{pos2[ca_idx, 2]:.3f} km</span><br>
+                    {t("velocity", L)}: <span style="color: #FF9100;">{np.linalg.norm(vel2[ca_idx]):.4f} km/s</span>
                 </div>
             </div>
             """, unsafe_allow_html=True)
@@ -563,7 +585,7 @@ if run_analysis:
         # ── Export Data ──
         st.markdown('<div class="glow-divider"></div>', unsafe_allow_html=True)
 
-        with st.expander("📥 Export Analysis Data"):
+        with st.expander(t("export_section", L)):
             export_df = pd.DataFrame({
                 "Time (UTC)": [dt.strftime("%Y-%m-%d %H:%M:%S") for dt in datetimes_list],
                 "Distance (km)": distances,
@@ -579,7 +601,7 @@ if run_analysis:
 
             csv = export_df.to_csv(index=False)
             st.download_button(
-                label="⬇️ Download CSV",
+                label=t("download_csv", L),
                 data=csv,
                 file_name=f"conjunction_analysis_{sat1_name}_{sat2_name}.csv",
                 mime="text/csv",
@@ -587,12 +609,12 @@ if run_analysis:
             )
 
     except Exception as e:
-        st.error(f"❌ Analysis Error: {str(e)}")
+        st.error(t("analysis_error", L, error=str(e)))
         st.exception(e)
 
 else:
     # ── Welcome Screen ──
-    st.markdown("""
+    st.markdown(f"""
     <div style="
         text-align: center;
         padding: 60px 40px;
@@ -606,7 +628,7 @@ else:
             font-weight: 700;
             margin-bottom: 16px;
         ">
-            Satellite Conjunction Analysis System
+            {t("welcome_title", L)}
         </h2>
         <p style="
             color: #78909C;
@@ -614,9 +636,7 @@ else:
             line-height: 1.8;
             margin-bottom: 32px;
         ">
-            Select two satellites from the sidebar catalog or enter custom TLE data,
-            then click <strong style="color: #00E5FF;">RUN CONJUNCTION ANALYSIS</strong>
-            to compute orbital trajectories, proximity distances, and collision probability.
+            {t("welcome_desc", L)}
         </p>
         <div class="welcome-grid">
             <div style="
@@ -626,8 +646,8 @@ else:
                 padding: 16px;
             ">
                 <div style="color: #00E5FF; font-size: 20px; margin-bottom: 6px;">📏</div>
-                <div style="color: #B0BEC5; font-size: 13px; font-weight: 600;">Proximity Analysis</div>
-                <div style="color: #546E7A; font-size: 11px; margin-top: 4px;">Euclidean distance at every time step</div>
+                <div style="color: #B0BEC5; font-size: 13px; font-weight: 600;">{t("feature_proximity", L)}</div>
+                <div style="color: #546E7A; font-size: 11px; margin-top: 4px;">{t("feature_proximity_desc", L)}</div>
             </div>
             <div style="
                 background: rgba(124,77,255,0.04);
@@ -636,8 +656,8 @@ else:
                 padding: 16px;
             ">
                 <div style="color: #B388FF; font-size: 20px; margin-bottom: 6px;">🎯</div>
-                <div style="color: #B0BEC5; font-size: 13px; font-weight: 600;">Collision Probability</div>
-                <div style="color: #546E7A; font-size: 11px; margin-top: 4px;">Pc estimation with covariance model</div>
+                <div style="color: #B0BEC5; font-size: 13px; font-weight: 600;">{t("feature_collision", L)}</div>
+                <div style="color: #546E7A; font-size: 11px; margin-top: 4px;">{t("feature_collision_desc", L)}</div>
             </div>
             <div style="
                 background: rgba(0,230,118,0.04);
@@ -646,8 +666,8 @@ else:
                 padding: 16px;
             ">
                 <div style="color: #00E676; font-size: 20px; margin-bottom: 6px;">🌐</div>
-                <div style="color: #B0BEC5; font-size: 13px; font-weight: 600;">3D Relative Orbit</div>
-                <div style="color: #546E7A; font-size: 11px; margin-top: 4px;">RIC frame visualization</div>
+                <div style="color: #B0BEC5; font-size: 13px; font-weight: 600;">{t("feature_3d", L)}</div>
+                <div style="color: #546E7A; font-size: 11px; margin-top: 4px;">{t("feature_3d_desc", L)}</div>
             </div>
             <div style="
                 background: rgba(255,145,0,0.04);
@@ -656,8 +676,8 @@ else:
                 padding: 16px;
             ">
                 <div style="color: #FF9100; font-size: 20px; margin-bottom: 6px;">⚠️</div>
-                <div style="color: #B0BEC5; font-size: 13px; font-weight: 600;">Alert System</div>
-                <div style="color: #546E7A; font-size: 11px; margin-top: 4px;">Green / Yellow / Red risk bands</div>
+                <div style="color: #B0BEC5; font-size: 13px; font-weight: 600;">{t("feature_alert", L)}</div>
+                <div style="color: #546E7A; font-size: 11px; margin-top: 4px;">{t("feature_alert_desc", L)}</div>
             </div>
         </div>
     </div>

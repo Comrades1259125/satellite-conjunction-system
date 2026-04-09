@@ -6,9 +6,10 @@ Creates all Plotly visualizations for the Conjunction Analysis dashboard.
 import numpy as np
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
+from core.translations import t
 
 
-def create_distance_chart(datetimes, distances, closest_approach):
+def create_distance_chart(datetimes, distances, closest_approach, lang="en"):
     """
     Graph 1: Distance over Time line chart.
     Shows the Euclidean distance between two satellites over the analysis window.
@@ -21,7 +22,7 @@ def create_distance_chart(datetimes, distances, closest_approach):
         y0=0, y1=2,
         fillcolor="rgba(255, 23, 68, 0.08)",
         line_width=0,
-        annotation_text="CRITICAL ZONE",
+        annotation_text=t("chart_critical_zone", lang),
         annotation_position="top left",
         annotation_font=dict(color="#FF1744", size=10),
     )
@@ -29,7 +30,7 @@ def create_distance_chart(datetimes, distances, closest_approach):
         y0=2, y1=10,
         fillcolor="rgba(255, 193, 7, 0.06)",
         line_width=0,
-        annotation_text="WARNING ZONE",
+        annotation_text=t("chart_warning_zone", lang),
         annotation_position="top left",
         annotation_font=dict(color="#FFC107", size=10),
     )
@@ -49,7 +50,7 @@ def create_distance_chart(datetimes, distances, closest_approach):
         x=datetimes,
         y=distances,
         mode="lines",
-        name="Distance",
+        name=t("chart_distance_trace", lang),
         line=dict(color="#00E5FF", width=2),
         fill="tozeroy",
         fillcolor="rgba(0, 229, 255, 0.05)",
@@ -65,7 +66,7 @@ def create_distance_chart(datetimes, distances, closest_approach):
         x=[ca_time],
         y=[ca_dist],
         mode="markers+text",
-        name="Closest Approach",
+        name=t("chart_closest_approach", lang),
         marker=dict(
             color="#FF1744",
             size=14,
@@ -84,17 +85,17 @@ def create_distance_chart(datetimes, distances, closest_approach):
 
     # Add threshold lines
     fig.add_hline(y=2, line_dash="dash", line_color="#FF1744", line_width=1,
-                  annotation_text="2 km threshold", annotation_font_color="#FF1744")
+                  annotation_text=t("chart_2km_threshold", lang), annotation_font_color="#FF1744")
     fig.add_hline(y=10, line_dash="dash", line_color="#FFC107", line_width=1,
-                  annotation_text="10 km threshold", annotation_font_color="#FFC107")
+                  annotation_text=t("chart_10km_threshold", lang), annotation_font_color="#FFC107")
 
     fig.update_layout(
         title=dict(
-            text="📡 Satellite Separation Distance Over Time",
+            text=t("chart_distance_title", lang),
             font=dict(size=18, color="#E0E0E0", family="Inter"),
         ),
-        xaxis_title="Time (UTC)",
-        yaxis_title="Distance (km)",
+        xaxis_title=t("chart_x_time", lang),
+        yaxis_title=t("chart_y_distance", lang),
         template="plotly_dark",
         paper_bgcolor="rgba(13, 17, 23, 0.95)",
         plot_bgcolor="rgba(13, 17, 23, 0.8)",
@@ -122,7 +123,7 @@ def create_distance_chart(datetimes, distances, closest_approach):
     return fig
 
 
-def create_collision_heatmap(heatmap_data, uncertainty_levels, time_indices, datetimes):
+def create_collision_heatmap(heatmap_data, uncertainty_levels, time_indices, datetimes, lang="en"):
     """
     Graph 2: Collision Probability Heatmap.
     Shows how probability varies with time and position uncertainty.
@@ -159,11 +160,11 @@ def create_collision_heatmap(heatmap_data, uncertainty_levels, time_indices, dat
 
     fig.update_layout(
         title=dict(
-            text="🎯 Collision Probability Heatmap (Pc vs Covariance)",
+            text=t("chart_heatmap_title", lang),
             font=dict(size=18, color="#E0E0E0", family="Inter"),
         ),
-        xaxis_title="Time (UTC)",
-        yaxis_title="Position Uncertainty σ (km)",
+        xaxis_title=t("chart_x_time", lang),
+        yaxis_title=t("chart_y_uncertainty", lang),
         template="plotly_dark",
         paper_bgcolor="rgba(13, 17, 23, 0.95)",
         plot_bgcolor="rgba(13, 17, 23, 0.8)",
@@ -179,7 +180,7 @@ def create_collision_heatmap(heatmap_data, uncertainty_levels, time_indices, dat
     return fig
 
 
-def create_3d_relative_orbit(relative_ric, closest_approach_idx):
+def create_3d_relative_orbit(relative_ric, closest_approach_idx, lang="en"):
     """
     Graph 3: 3D Relative Orbit in RIC frame.
     Shows the trajectory of satellite 2 relative to satellite 1.
@@ -197,7 +198,7 @@ def create_3d_relative_orbit(relative_ric, closest_approach_idx):
     fig.add_trace(go.Scatter3d(
         x=I, y=C, z=R,
         mode="lines",
-        name="Relative Trajectory",
+        name=t("chart_3d_trajectory", lang),
         line=dict(
             color=dist,
             colorscale=[
@@ -219,7 +220,7 @@ def create_3d_relative_orbit(relative_ric, closest_approach_idx):
     fig.add_trace(go.Scatter3d(
         x=[0], y=[0], z=[0],
         mode="markers+text",
-        name="Primary (SAT-1)",
+        name=t("chart_3d_primary", lang),
         marker=dict(size=8, color="#00E5FF", symbol="diamond"),
         text=["SAT-1"],
         textfont=dict(color="#00E5FF", size=12),
@@ -232,7 +233,7 @@ def create_3d_relative_orbit(relative_ric, closest_approach_idx):
         y=[C[closest_approach_idx]],
         z=[R[closest_approach_idx]],
         mode="markers+text",
-        name="Closest Approach",
+        name=t("chart_closest_approach", lang),
         marker=dict(
             size=10,
             color="#FF1744",
@@ -248,9 +249,9 @@ def create_3d_relative_orbit(relative_ric, closest_approach_idx):
     fig.add_trace(go.Scatter3d(
         x=[I[0]], y=[C[0]], z=[R[0]],
         mode="markers+text",
-        name="Start",
+        name=t("chart_3d_start", lang),
         marker=dict(size=6, color="#00E676", symbol="circle"),
-        text=["START"],
+        text=[t("chart_3d_start", lang).upper()],
         textfont=dict(color="#00E676", size=10),
         textposition="bottom center",
     ))
@@ -259,22 +260,22 @@ def create_3d_relative_orbit(relative_ric, closest_approach_idx):
     fig.add_trace(go.Scatter3d(
         x=[I[-1]], y=[C[-1]], z=[R[-1]],
         mode="markers+text",
-        name="End",
+        name=t("chart_3d_end", lang),
         marker=dict(size=6, color="#7C4DFF", symbol="circle"),
-        text=["END"],
+        text=[t("chart_3d_end", lang).upper()],
         textfont=dict(color="#7C4DFF", size=10),
         textposition="bottom center",
     ))
 
     fig.update_layout(
         title=dict(
-            text="🌐 3D Relative Orbit (RIC Frame — as seen from SAT-1)",
+            text=t("chart_3d_title", lang),
             font=dict(size=18, color="#E0E0E0", family="Inter"),
         ),
         scene=dict(
-            xaxis_title="In-track (km)",
-            yaxis_title="Cross-track (km)",
-            zaxis_title="Radial (km)",
+            xaxis_title=t("chart_3d_intrack", lang),
+            yaxis_title=t("chart_3d_crosstrack", lang),
+            zaxis_title=t("chart_3d_radial", lang),
             bgcolor="rgba(13, 17, 23, 0.95)",
             xaxis=dict(
                 backgroundcolor="rgba(13, 17, 23, 0.8)",

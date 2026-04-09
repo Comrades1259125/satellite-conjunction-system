@@ -6,18 +6,20 @@ Risk level indicators and alert system for the conjunction analysis.
 import streamlit as st
 import pandas as pd
 from datetime import datetime
+from core.translations import t
 
 
-def render_risk_banner(risk_level, risk_color, risk_emoji, distance_km):
+def render_risk_banner(risk_level, risk_color, risk_emoji, distance_km, min_distance_label="Minimum Distance"):
     """
     Render a large risk-level banner at the top of the dashboard.
     """
     glow_color = risk_color
-    if risk_level == "CRITICAL":
+    # Use color-based detection for gradient (risk_level may be translated)
+    if risk_color == "#FF1744":
         bg_gradient = "linear-gradient(135deg, rgba(255,23,68,0.15), rgba(183,28,28,0.1))"
         border_color = "#FF1744"
         pulse_class = "pulse-critical"
-    elif risk_level == "WARNING":
+    elif risk_color == "#FFC107":
         bg_gradient = "linear-gradient(135deg, rgba(255,193,7,0.12), rgba(245,127,23,0.08))"
         border_color = "#FFC107"
         pulse_class = "pulse-warning"
@@ -53,14 +55,14 @@ def render_risk_banner(risk_level, risk_color, risk_emoji, distance_km):
             margin-top: 8px;
             font-family: 'Inter', sans-serif;
         ">
-            Minimum Distance: <span style="color: {risk_color}; font-weight: 700;">{distance_km:.3f} km</span>
+            {min_distance_label}: <span style="color: {risk_color}; font-weight: 700;">{distance_km:.3f} km</span>
             ({distance_km * 1000:.1f} m)
         </div>
     </div>
     """, unsafe_allow_html=True)
 
 
-def render_telemetry_table(closest_approach, relative_velocity, sat1_name, sat2_name):
+def render_telemetry_table(closest_approach, relative_velocity, sat1_name, sat2_name, lang="en"):
     """
     Render the telemetry summary table at the closest approach point.
     """
@@ -72,19 +74,19 @@ def render_telemetry_table(closest_approach, relative_velocity, sat1_name, sat2_
     rel_vec = relative_velocity["vector"]
 
     data = {
-        "Parameter": [
-            "🛰️ Primary Object",
-            "🛰️ Secondary Object",
-            "⏱️ Time of Closest Approach (TCA)",
-            "📏 Miss Distance",
-            "📏 Miss Distance (meters)",
-            "💨 Relative Velocity",
-            "💨 Relative Velocity (m/s)",
-            f"↔️ ΔVx (ITRF)",
-            f"↕️ ΔVy (ITRF)",
-            f"🔄 ΔVz (ITRF)",
+        t("col_parameter", lang): [
+            t("param_primary", lang),
+            t("param_secondary", lang),
+            t("param_tca", lang),
+            t("param_miss_dist", lang),
+            t("param_miss_dist_m", lang),
+            t("param_rel_vel", lang),
+            t("param_rel_vel_ms", lang),
+            t("param_dvx", lang),
+            t("param_dvy", lang),
+            t("param_dvz", lang),
         ],
-        "Value": [
+        t("col_value", lang): [
             sat1_name,
             sat2_name,
             ca_time.strftime("%Y-%m-%d %H:%M:%S UTC"),
@@ -111,7 +113,7 @@ def render_telemetry_table(closest_approach, relative_velocity, sat1_name, sat2_
         text-transform: uppercase;
     }
     </style>
-    <div class="telemetry-title">📊 Telemetry Summary @ TCA</div>
+    <div class="telemetry-title">{t("telemetry_title", lang)}</div>
     """, unsafe_allow_html=True)
 
     st.dataframe(
@@ -119,13 +121,13 @@ def render_telemetry_table(closest_approach, relative_velocity, sat1_name, sat2_
         use_container_width=True,
         hide_index=True,
         column_config={
-            "Parameter": st.column_config.TextColumn("Parameter", width="medium"),
-            "Value": st.column_config.TextColumn("Value", width="medium"),
+            t("col_parameter", lang): st.column_config.TextColumn(t("col_parameter", lang), width="medium"),
+            t("col_value", lang): st.column_config.TextColumn(t("col_value", lang), width="medium"),
         },
     )
 
 
-def render_metric_cards(closest_approach, relative_velocity, risk_level_info):
+def render_metric_cards(closest_approach, relative_velocity, risk_level_info, lang="en"):
     """
     Render summary metric cards in a row.
     """
@@ -145,11 +147,11 @@ def render_metric_cards(closest_approach, relative_velocity, risk_level_info):
             padding: clamp(12px, 2vw, 20px);
             text-align: center;
         ">
-            <div style="font-size: clamp(10px, 1.5vw, 12px); color: #546E7A; text-transform: uppercase; letter-spacing: 1px;">Min Distance</div>
+            <div style="font-size: clamp(10px, 1.5vw, 12px); color: #546E7A; text-transform: uppercase; letter-spacing: 1px;">{t("card_min_distance", lang)}</div>
             <div style="font-size: clamp(18px, 3vw, 24px); font-weight: 800; color: #00E5FF; font-family: 'JetBrains Mono', monospace; margin-top: 8px;">
                 {ca_dist:.3f} km
             </div>
-            <div style="font-size: 11px; color: #78909C; margin-top: 4px;">{ca_dist*1000:.1f} meters</div>
+            <div style="font-size: 11px; color: #78909C; margin-top: 4px;">{ca_dist*1000:.1f} {t("meters", lang)}</div>
         </div>
         """, unsafe_allow_html=True)
 
@@ -162,7 +164,7 @@ def render_metric_cards(closest_approach, relative_velocity, risk_level_info):
             padding: clamp(12px, 2vw, 20px);
             text-align: center;
         ">
-            <div style="font-size: clamp(10px, 1.5vw, 12px); color: #546E7A; text-transform: uppercase; letter-spacing: 1px;">TCA Time</div>
+            <div style="font-size: clamp(10px, 1.5vw, 12px); color: #546E7A; text-transform: uppercase; letter-spacing: 1px;">{t("card_tca_time", lang)}</div>
             <div style="font-size: clamp(14px, 2.5vw, 18px); font-weight: 700; color: #B388FF; font-family: 'JetBrains Mono', monospace; margin-top: 8px;">
                 {ca_time.strftime("%H:%M:%S")}
             </div>
@@ -179,7 +181,7 @@ def render_metric_cards(closest_approach, relative_velocity, risk_level_info):
             padding: clamp(12px, 2vw, 20px);
             text-align: center;
         ">
-            <div style="font-size: clamp(10px, 1.5vw, 12px); color: #546E7A; text-transform: uppercase; letter-spacing: 1px;">Rel. Velocity</div>
+            <div style="font-size: clamp(10px, 1.5vw, 12px); color: #546E7A; text-transform: uppercase; letter-spacing: 1px;">{t("card_rel_velocity", lang)}</div>
             <div style="font-size: clamp(18px, 3vw, 24px); font-weight: 800; color: #FF9100; font-family: 'JetBrains Mono', monospace; margin-top: 8px;">
                 {rel_vel:.2f}
             </div>
@@ -196,7 +198,7 @@ def render_metric_cards(closest_approach, relative_velocity, risk_level_info):
             padding: clamp(12px, 2vw, 20px);
             text-align: center;
         ">
-            <div style="font-size: clamp(10px, 1.5vw, 12px); color: #546E7A; text-transform: uppercase; letter-spacing: 1px;">Risk Level</div>
+            <div style="font-size: clamp(10px, 1.5vw, 12px); color: #546E7A; text-transform: uppercase; letter-spacing: 1px;">{t("card_risk_level", lang)}</div>
             <div style="font-size: clamp(20px, 4vw, 28px); margin-top: 8px;">{risk_emoji}</div>
             <div style="font-size: clamp(12px, 2vw, 14px); font-weight: 800; color: {risk_color}; letter-spacing: 2px; font-family: 'JetBrains Mono', monospace;">{risk_name}</div>
         </div>
