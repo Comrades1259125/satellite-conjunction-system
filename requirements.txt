@@ -5,3 +5,5 @@ plotly>=5.18.0
 pandas>=2.0.0
 scipy>=1.11.0
 requests>=2.28.0
+fpdf2>=2.7.9
+kaleido>=0.2.1
