@@ -129,6 +129,24 @@ TRANSLATIONS = {
         "feature_3d_desc": "RIC frame visualization",
         "feature_alert": "Alert System",
         "feature_alert_desc": "Green / Yellow / Red risk bands",
+
+        # ── Advanced Features ──
+        "app_mode": "App Mode",
+        "mode_1on1": "1-on-1 Analysis",
+        "mode_scanner": "Broad Catalog Scanner",
+        "start_time_label": "Start Time (UTC)",
+        "tle_freshness": "TLE Freshness",
+        "tle_fresh": "🟢 Fresh",
+        "tle_warning": "🟡 Aging",
+        "tle_stale": "🔴 Stale",
+        "maneuver_title": "## 🚀 Maneuver Configurator",
+        "dv_x": "Delta-V In-track (m/s)",
+        "dv_y": "Delta-V Cross-track (m/s)",
+        "dv_z": "Delta-V Radial (m/s)",
+        "earth_3d_title": "🌍 3D Earth Orbit View (ITRF)",
+        "scan_title": "🛰️ Top Catalog Threats",
+        "scanning": "Scanning {count} satellites...",
+        "export_pdf": "📄 Export PDF Report",
     },
 
     "th": {
@@ -256,6 +274,24 @@ TRANSLATIONS = {
         "feature_3d_desc": "แสดงผลในกรอบ RIC",
         "feature_alert": "ระบบแจ้งเตือน",
         "feature_alert_desc": "แถบระดับ เขียว / เหลือง / แดง",
+
+        # ── Advanced Features ──
+        "app_mode": "โหมดแอปพลิเคชัน",
+        "mode_1on1": "วิเคราะห์เจาะลึก 1-ต่อ-1",
+        "mode_scanner": "สแกนหาภัยคุกคามรอบตัว",
+        "start_time_label": "เวลาเริ่มต้น (UTC)",
+        "tle_freshness": "ความใหม่ของข้อมูล TLE",
+        "tle_fresh": "🟢 ใหม่",
+        "tle_warning": "🟡 เริ่มเก่า",
+        "tle_stale": "🔴 เก่าเกินไป",
+        "maneuver_title": "## 🚀 ระบบจำลองหลบหลีก (Maneuver)",
+        "dv_x": "Delta-V In-track (m/s)",
+        "dv_y": "Delta-V Cross-track (m/s)",
+        "dv_z": "Delta-V Radial (m/s)",
+        "earth_3d_title": "🌍 วงโคจร 3 มิติบนผิวโลก (กรอบ ITRF)",
+        "scan_title": "🛰️ ภัยคุกคามสูงสุดจากแคตตาล็อก",
+        "scanning": "กำลังสแกนดาวเทียม {count} ดวง...",
+        "export_pdf": "📄 ส่งออกรายงาน PDF",
     },
 }
 

@@ -16,12 +16,14 @@ from core.tle_fetcher import (
     get_satellite,
     get_satellite_from_tle,
     get_available_satellites,
+    get_tle_age,
 )
 from core.orbit_calculator import (
     compute_positions,
     compute_velocities,
     generate_time_array,
     compute_orbital_elements,
+    compute_itrf_positions,
 )
 from core.proximity_analysis import (
     compute_distances,
@@ -32,11 +34,13 @@ from core.proximity_analysis import (
     compute_collision_probability_over_time,
     get_risk_level,
     generate_covariance_heatmap_data,
+    apply_cw_maneuver,
 )
 from ui.charts import (
     create_distance_chart,
     create_collision_heatmap,
     create_3d_relative_orbit,
+    create_3d_earth_view,
 )
 from ui.alerts import (
     render_risk_banner,
@@ -44,6 +48,7 @@ from ui.alerts import (
     render_metric_cards,
 )
 from core.translations import t
+from core.report_generator import generate_pdf_report
 
 
 # ─── Page Configuration ───────────────────────────────────────────────────────
@@ -262,6 +267,14 @@ with st.sidebar:
 
     L = st.session_state.lang  # refresh after potential rerun
 
+    app_mode = st.radio(
+        t("app_mode", L),
+        [t("mode_1on1", L), t("mode_scanner", L)],
+        index=0,
+    )
+
+
+
     st.markdown('<div class="glow-divider"></div>', unsafe_allow_html=True)
     st.markdown(t("config_title", L))
     st.markdown('<div class="glow-divider"></div>', unsafe_allow_html=True)
@@ -320,6 +333,17 @@ with st.sidebar:
     st.markdown('<div class="glow-divider"></div>', unsafe_allow_html=True)
     st.markdown(t("analysis_window", L))
 
+    # Historical Mode Date Picker
+    start_date = st.date_input(
+        t("start_time_label", L),
+        value=datetime.now(timezone.utc),
+    )
+    start_time_str = st.time_input("Time (UTC)", value=datetime.now(timezone.utc).time())
+    
+    # Combine date and time
+    start_datetime = datetime.combine(start_date, start_time_str).replace(tzinfo=timezone.utc)
+
+
     duration_hours = st.slider(
         t("duration_label", L),
         min_value=1,
@@ -362,6 +386,13 @@ with st.sidebar:
     )
 
     st.markdown('<div class="glow-divider"></div>', unsafe_allow_html=True)
+    st.markdown(t("maneuver_title", L))
+    
+    dv_x = st.slider(t("dv_x", L), -50.0, 50.0, 0.0, step=0.1, format="%.1f")
+    dv_y = st.slider(t("dv_y", L), -50.0, 50.0, 0.0, step=0.1, format="%.1f")
+    dv_z = st.slider(t("dv_z", L), -50.0, 50.0, 0.0, step=0.1, format="%.1f")
+
+    st.markdown('<div class="glow-divider"></div>', unsafe_allow_html=True)
 
     run_analysis = st.button(t("run_button", L), use_container_width=True)
 
@@ -382,6 +413,40 @@ with st.sidebar:
 # ─── Main Analysis ────────────────────────────────────────────────────────────
 
 if run_analysis:
+    if app_mode == t("mode_scanner", L):
+        from core.scanner import run_catalog_scan
+        with st.spinner(t("scanning", L, count=len(get_available_satellites()) - 1)):
+            try:
+                ts = load.timescale()
+                if custom_tle:
+                    sat1 = get_satellite_from_tle(sat1_name, sat1_line1, sat1_line2, ts)
+                else:
+                    sat1 = get_satellite(sat1_name, ts)
+                
+                time_array, datetimes_list = generate_time_array(ts, duration_hours, step_minutes, start_time=start_datetime)
+                threats = run_catalog_scan(sat1_name, sat1, ts, time_array)
+                
+                st.success(f"✅ Scan complete. Found {len(threats)} potential threats.")
+                st.markdown(f'<div class="section-title">{t("scan_title", L)}</div>', unsafe_allow_html=True)
+                
+                if threats:
+                    df = pd.DataFrame([
+                        {
+                            "Threat Satellite": t["name"], 
+                            "Min Distance (km)": float(f"{t['min_distance_km']:.2f}"), 
+                            "TCA Time": datetimes_list[t["tca_idx"]].strftime("%Y-%m-%d %H:%M UTC")
+                        } 
+                        for t in threats[:10]
+                    ])
+                    # Style the dataframe using pandas styling
+                    styled_df = df.style.map(lambda v: 'color: #FF1744; font-weight: bold;' if isinstance(v, float) and v < 10.0 else ('color: #FFC107;' if isinstance(v, float) and v < 50.0 else ''))
+                    st.dataframe(styled_df, use_container_width=True)
+                else:
+                    st.info("No nearby satellites found in the catalog over this window.")
+            except Exception as e:
+                st.error(t("analysis_error", L, error=str(e)))
+        st.stop()
+        
     try:
         # ── Load satellites ──
         with st.spinner(t("loading_tle", L)):
@@ -396,21 +461,36 @@ if run_analysis:
 
         st.success(t("loaded_success", L, sat1=sat1_name, sat2=sat2_name))
 
+        # TLE Freshness
+        age1 = get_tle_age(sat1)
+        age2 = get_tle_age(sat2)
+        
+        col_f1, col_f2 = st.columns(2)
+        with col_f1:
+            status1 = t("tle_fresh", L) if age1 < 3 else t("tle_warning", L) if age1 < 7 else t("tle_stale", L)
+            st.info(f"**{sat1_name}** {t('tle_freshness', L)}: {age1:.1f} days ({status1})")
+        with col_f2:
+            status2 = t("tle_fresh", L) if age2 < 3 else t("tle_warning", L) if age2 < 7 else t("tle_stale", L)
+            st.info(f"**{sat2_name}** {t('tle_freshness', L)}: {age2:.1f} days ({status2})")
+
         # ── Generate time array ──
         with st.spinner(t("generating_timeline", L, hours=duration_hours, step=step_minutes)):
-            time_array, datetimes_list = generate_time_array(ts, duration_hours, step_minutes)
+            time_array, datetimes_list = generate_time_array(ts, duration_hours, step_minutes, start_time=start_datetime)
             total_steps = len(datetimes_list)
 
         # ── Compute positions & velocities ──
         with st.spinner(t("computing_positions", L)):
             progress = st.progress(0, text=t("computing_sat_pos", L, name=sat1_name))
             pos1 = compute_positions(sat1, ts, time_array)
-            progress.progress(25, text=t("computing_sat_pos", L, name=sat2_name))
+            progress.progress(20, text=t("computing_sat_pos", L, name=sat2_name))
             pos2 = compute_positions(sat2, ts, time_array)
-            progress.progress(50, text=t("computing_sat_vel", L, name=sat1_name))
+            progress.progress(40, text=t("computing_sat_vel", L, name=sat1_name))
             vel1 = compute_velocities(sat1, ts, time_array)
-            progress.progress(75, text=t("computing_sat_vel", L, name=sat2_name))
+            progress.progress(60, text=t("computing_sat_vel", L, name=sat2_name))
             vel2 = compute_velocities(sat2, ts, time_array)
+            progress.progress(80, text="Computing Earth-Fixed (ITRF) coordinates...")
+            itrf1 = compute_itrf_positions(sat1, ts, time_array)
+            itrf2 = compute_itrf_positions(sat2, ts, time_array)
             progress.progress(100, text=t("positions_done", L))
 
         # ── Proximity analysis ──
@@ -432,6 +512,23 @@ if run_analysis:
 
             # Relative positions in RIC frame
             relative_ric = compute_relative_positions(pos1, pos2, vel1)
+            
+            # Apply Maneuver (if any)
+            import numpy as np
+            dt_seconds = np.array([(dt - datetimes_list[0]).total_seconds() for dt in datetimes_list])
+            perturbed_ric = apply_cw_maneuver(
+                relative_ric, 
+                dt_seconds, 
+                pos1, 
+                vel1, 
+                dv_radial_ms=dv_z,
+                dv_intrack_ms=dv_x,
+                dv_crosstrack_ms=dv_y,
+            )
+            
+            # If no maneuver was inputted, perturbed_ric is effectively the same, pass None
+            if dv_x == 0 and dv_y == 0 and dv_z == 0:
+                perturbed_ric = None
 
             # Heatmap data
             heatmap_data, uncertainty_levels, time_indices = generate_covariance_heatmap_data(
@@ -521,8 +618,13 @@ if run_analysis:
 
         # ── Graph 3: 3D Relative Orbit ──
         st.markdown(f'<div class="section-title">{t("ric_section", L)}</div>', unsafe_allow_html=True)
-        fig_3d = create_3d_relative_orbit(relative_ric, closest["index"], L)
+        fig_3d = create_3d_relative_orbit(relative_ric, closest["index"], L, perturbed_ric=perturbed_ric)
         st.plotly_chart(fig_3d, use_container_width=True, key="3d_orbit_chart")
+
+        # ── Graph 4: 3D Earth Orbit View ──
+        st.markdown(f'<div class="section-title">{t("earth_3d_title", L)}</div>', unsafe_allow_html=True)
+        fig_earth = create_3d_earth_view(itrf1, itrf2, sat1_name, sat2_name, closest["index"], L)
+        st.plotly_chart(fig_earth, use_container_width=True, key="3d_earth_chart")
 
         st.markdown('<div class="glow-divider"></div>', unsafe_allow_html=True)
 
@@ -599,14 +701,33 @@ if run_analysis:
             })
             st.dataframe(export_df, use_container_width=True, height=300)
 
-            csv = export_df.to_csv(index=False)
-            st.download_button(
-                label=t("download_csv", L),
-                data=csv,
-                file_name=f"conjunction_analysis_{sat1_name}_{sat2_name}.csv",
-                mime="text/csv",
-                use_container_width=True,
-            )
+            csv = export_df.to_csv(index=False).encode('utf-8')
+            
+            col_ex1, col_ex2 = st.columns(2)
+            with col_ex1:
+                st.download_button(
+                    label=t("download_csv", L),
+                    data=csv,
+                    file_name=f"conjunction_analysis_{sat1_name}_{sat2_name}.csv",
+                    mime="text/csv",
+                    use_container_width=True,
+                )
+            
+            with col_ex2:
+                with st.spinner(t("generate_pdf_report", L) if "generate_pdf_report" in st.session_state.get('lang_dict', {}) else "Preparing PDF..."):
+                    tca_str = closest["time"].strftime('%Y-%m-%d %H:%M:%S UTC')
+                    pdf_bytes = generate_pdf_report(
+                        sat1_name, sat2_name, max_pc, risk_display, 
+                        closest["distance_km"], tca_str, 
+                        fig_distance, fig_heatmap, fig_3d, fig_earth
+                    )
+                st.download_button(
+                    label=t("download_pdf", L),
+                    data=pdf_bytes,
+                    file_name=f"report_{sat1_name}_{sat2_name}.pdf",
+                    mime="application/pdf",
+                    use_container_width=True,
+                )
 
     except Exception as e:
         st.error(t("analysis_error", L, error=str(e)))

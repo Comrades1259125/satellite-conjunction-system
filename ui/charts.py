@@ -180,7 +180,7 @@ def create_collision_heatmap(heatmap_data, uncertainty_levels, time_indices, dat
     return fig
 
 
-def create_3d_relative_orbit(relative_ric, closest_approach_idx, lang="en"):
+def create_3d_relative_orbit(relative_ric, closest_approach_idx, lang="en", perturbed_ric=None):
     """
     Graph 3: 3D Relative Orbit in RIC frame.
     Shows the trajectory of satellite 2 relative to satellite 1.
@@ -194,7 +194,7 @@ def create_3d_relative_orbit(relative_ric, closest_approach_idx, lang="en"):
 
     fig = go.Figure()
 
-    # Orbit trajectory
+    # Orbit trajectory (Unperturbed)
     fig.add_trace(go.Scatter3d(
         x=I, y=C, z=R,
         mode="lines",
@@ -208,13 +208,36 @@ def create_3d_relative_orbit(relative_ric, closest_approach_idx, lang="en"):
                 [0.7, "#00BCD4"],
                 [1.0, "#00E5FF"],
             ],
-            width=4,
+            width=4 if perturbed_ric is None else 2,
         ),
+        opacity=0.5 if perturbed_ric is not None else 1.0,
         hovertemplate="<b>In-track:</b> %{x:.2f} km<br>"
                       "<b>Cross-track:</b> %{y:.2f} km<br>"
                       "<b>Radial:</b> %{z:.2f} km<br>"
-                      "<extra></extra>",
+                      "<extra>Original</extra>",
     ))
+    
+    # Maneuvered Trajectory (if any)
+    if perturbed_ric is not None:
+        PR = perturbed_ric[:, 0]
+        PI = perturbed_ric[:, 1]
+        PC = perturbed_ric[:, 2]
+        p_dist = np.sqrt(PR**2 + PI**2 + PC**2)
+        
+        fig.add_trace(go.Scatter3d(
+            x=PI, y=PC, z=PR,
+            mode="lines",
+            name="Maneuver Trajectory",
+            line=dict(
+                color="#00E676", # Green trace for evasive path
+                width=5,
+                dash='solid'
+            ),
+            hovertemplate="<b>In-track:</b> %{x:.2f} km<br>"
+                          "<b>Cross-track:</b> %{y:.2f} km<br>"
+                          "<b>Radial:</b> %{z:.2f} km<br>"
+                          "<extra>Post-Maneuver</extra>",
+        ))
 
     # Origin (Primary satellite position)
     fig.add_trace(go.Scatter3d(
@@ -312,4 +335,88 @@ def create_3d_relative_orbit(relative_ric, closest_approach_idx, lang="en"):
         ),
     )
 
+    return fig
+
+def create_3d_earth_view(pos_itrf1, pos_itrf2, sat1_name, sat2_name, closest_idx, lang="en"):
+    """
+    Graph 4: 3D Earth Orbit (ECEF/ITRF frame).
+    Plots paths around an approximate Earth sphere to show geographical context.
+    """
+    fig = go.Figure()
+
+    # Earth Sphere (approximate)
+    R_earth = 6371.0
+    u = np.linspace(0, 2 * np.pi, 50)
+    v = np.linspace(0, np.pi, 50)
+    x = R_earth * np.outer(np.cos(u), np.sin(v))
+    y = R_earth * np.outer(np.sin(u), np.sin(v))
+    z = R_earth * np.outer(np.ones(np.size(u)), np.cos(v))
+
+    fig.add_trace(go.Surface(
+        x=x, y=y, z=z,
+        colorscale=[[0, '#001E36'], [1, '#00BCD4']],
+        showscale=False,
+        opacity=0.15,
+        name="Earth",
+        hoverinfo="skip"
+    ))
+
+    # Sat 1 Trajectory
+    fig.add_trace(go.Scatter3d(
+        x=pos_itrf1[:,0], y=pos_itrf1[:,1], z=pos_itrf1[:,2],
+        mode="lines",
+        name=sat1_name,
+        line=dict(color="#00E5FF", width=3)
+    ))
+
+    # Sat 2 Trajectory
+    fig.add_trace(go.Scatter3d(
+        x=pos_itrf2[:,0], y=pos_itrf2[:,1], z=pos_itrf2[:,2],
+        mode="lines",
+        name=sat2_name,
+        line=dict(color="#B388FF", width=3)
+    ))
+
+    # TCA Point
+    fig.add_trace(go.Scatter3d(
+        x=[pos_itrf1[closest_idx,0]],
+        y=[pos_itrf1[closest_idx,1]],
+        z=[pos_itrf1[closest_idx,2]],
+        mode="markers+text",
+        name="TCA",
+        marker=dict(size=6, color="#FF1744", symbol="x"),
+        text=["TCA"],
+        textposition="top center",
+        textfont=dict(color="#FF1744", size=14)
+    ))
+    
+    fig.update_layout(
+        title=dict(
+            text=t("earth_3d_title", lang),
+            font=dict(size=18, color="#E0E0E0", family="Inter"),
+        ),
+        scene=dict(
+            xaxis=dict(showbackground=False, showticklabels=False, title="", showgrid=False),
+            yaxis=dict(showbackground=False, showticklabels=False, title="", showgrid=False),
+            zaxis=dict(showbackground=False, showticklabels=False, title="", showgrid=False),
+            bgcolor="rgba(13, 17, 23, 0.95)",
+            aspectmode='data',
+            camera=dict(
+                eye=dict(
+                    x=1.2 * pos_itrf1[closest_idx,0]/R_earth,
+                    y=1.2 * pos_itrf1[closest_idx,1]/R_earth,
+                    z=1.2 * pos_itrf1[closest_idx,2]/R_earth
+                )
+            )
+        ),
+        template="plotly_dark",
+        paper_bgcolor="rgba(13, 17, 23, 0.95)",
+        margin=dict(l=0, r=0, t=60, b=0),
+        height=500,
+        legend=dict(
+            bgcolor="rgba(0,0,0,0.5)",
+            bordercolor="rgba(255,255,255,0.1)",
+            x=0.02, y=0.98
+        )
+    )
     return fig

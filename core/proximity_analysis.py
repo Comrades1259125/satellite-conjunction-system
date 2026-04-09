@@ -103,6 +103,54 @@ def compute_relative_positions(positions_1, positions_2, velocities_1):
 
     return relative_ric
 
+def apply_cw_maneuver(relative_ric, time_array_seconds, primary_positions, primary_velocities, dv_radial_ms=0, dv_intrack_ms=0, dv_crosstrack_ms=0):
+    """
+    Apply Clohessy-Wiltshire equations to propagate a maneuver in the RIC frame.
+    
+    Args:
+        relative_ric: Unperturbed relative trajectory in RIC frame (N, 3) in km
+        time_array_seconds: Array of elapsed time from maneuver epoch in seconds (N,)
+        primary_positions: Primary sat positions (N, 3) in km
+        primary_velocities: Primary sat velocities (N, 3) in km/s
+        dv_radial_ms: Delta-V applied in Radial direction (m/s)
+        dv_intrack_ms: Delta-V applied in In-track direction (m/s)
+        dv_crosstrack_ms: Delta-V applied in Cross-track direction (m/s)
+        
+    Returns:
+        perturbed_ric: New relative trajectory (N, 3) in km
+    """
+    if dv_radial_ms == 0 and dv_intrack_ms == 0 and dv_crosstrack_ms == 0:
+        return relative_ric
+        
+    # Convert m/s to km/s
+    dv_x = dv_radial_ms / 1000.0
+    dv_y = dv_intrack_ms / 1000.0
+    dv_z = dv_crosstrack_ms / 1000.0
+    
+    # Calculate Mean Motion (n) using initial state ||V|| / ||R|| for near-circular orbits
+    r0 = np.linalg.norm(primary_positions[0])
+    v0 = np.linalg.norm(primary_velocities[0])
+    n = v0 / r0  # radians / sec
+    
+    perturbed_ric = np.copy(relative_ric)
+    
+    t = time_array_seconds
+    nt = n * t
+    sin_nt = np.sin(nt)
+    cos_nt = np.cos(nt)
+    
+    # CW Equations for position change given initial velocity change
+    dx = (dv_x / n) * sin_nt - (2 * dv_y / n) * (1 - cos_nt)
+    dy = (2 * dv_x / n) * (1 - cos_nt) + (dv_y / n) * (4 * sin_nt - 3 * nt)
+    dz = (dv_z / n) * sin_nt
+    
+    # Add deviations to the original unperturbed trajectory
+    perturbed_ric[:, 0] += dx
+    perturbed_ric[:, 1] += dy
+    perturbed_ric[:, 2] += dz
+    
+    return perturbed_ric
+
 
 def compute_collision_probability(
     distance_km,

@@ -126,3 +126,14 @@ def get_satellite_from_tle(name: str, line1: str, line2: str, ts=None) -> EarthS
 def get_available_satellites() -> list:
     """Return list of available satellite names."""
     return list(SATELLITE_CATALOG.keys())
+
+def get_tle_age(satellite: EarthSatellite) -> float:
+    """
+    Return the age of the TLE in days from the current time.
+    """
+    from datetime import datetime, timezone
+    now = datetime.now(timezone.utc)
+    # Ensure epoch has timezone info for subtraction
+    epoch = satellite.epoch.utc_datetime()
+    delta = now - epoch
+    return delta.total_seconds() / 86400.0

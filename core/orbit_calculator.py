@@ -43,35 +43,55 @@ def compute_velocities(satellite, ts, time_array):
     return vel.T  # shape (N, 3)
 
 
-def generate_time_array(ts, duration_hours=24, step_minutes=1):
+def generate_time_array(ts, duration_hours=24, step_minutes=1, start_time=None):
     """
-    Generate a time array from now for the specified duration.
+    Generate a time array from start_time for the specified duration.
 
     Args:
         ts: Skyfield timescale
         duration_hours: Duration in hours (default 24)
         step_minutes: Time step in minutes (default 1)
+        start_time: Optional datetime start time for historical analysis. Defaults to now.
 
     Returns:
         time_array: Skyfield Time array
         datetimes: List of Python datetime objects (UTC)
     """
-    now = datetime.now(timezone.utc)
+    if start_time is None:
+        start_time = datetime.now(timezone.utc)
+    else:
+        # ensuring it's timezone-aware
+        if start_time.tzinfo is None:
+            start_time = start_time.replace(tzinfo=timezone.utc)
+            
     total_minutes = int(duration_hours * 60)
-    num_steps = total_minutes // step_minutes + 1
-
-    datetimes = [now + timedelta(minutes=i * step_minutes) for i in range(num_steps)]
-
-    # Convert to Skyfield time
-    years = [dt.year for dt in datetimes]
-    months = [dt.month for dt in datetimes]
-    days = [dt.day for dt in datetimes]
-    hours = [dt.hour for dt in datetimes]
-    minutes = [dt.minute for dt in datetimes]
-    seconds = [dt.second + dt.microsecond / 1e6 for dt in datetimes]
-
-    time_array = ts.utc(years, months, days, hours, minutes, seconds)
+    datetimes = [start_time + timedelta(minutes=m) for m in range(0, total_minutes + 1, step_minutes)]
+    
+    # Convert standard Python datetimes to Skyfield times
+    time_array = ts.from_datetimes(datetimes)
+    
     return time_array, datetimes
+
+
+def compute_itrf_positions(satellite, ts, time_array):
+    """
+    Compute ITRF (Earth-Centered, Earth-Fixed) positions for a satellite over a time array.
+    This is required for 3D Earth plotting (ECEF coordinates).
+
+    Args:
+        satellite: EarthSatellite object
+        ts: Skyfield timescale
+        time_array: Skyfield Time array
+
+    Returns:
+        positions_itrf: numpy array of shape (N, 3) in km
+    """
+    geocentric = satellite.at(time_array)
+    # Skyfield .itrf_xyz returns essentially ECEF coordinates
+    # Shape is (3, N) -> Transpose to (N, 3)
+    pos = geocentric.itrf_xyz().km
+    return pos.T
+
 
 
 def compute_orbital_elements(satellite, ts, time_array):
