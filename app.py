@@ -201,6 +201,144 @@ st.markdown("""
         animation: pulse-glow 2s ease-in-out infinite;
     }
 
+    /* ── Force ALL text to light colors on dark background ── */
+    /* General text elements */
+    .stApp, .stApp * {
+        color-scheme: dark !important;
+    }
+    .stMarkdown, .stMarkdown p, .stMarkdown span,
+    .stMarkdown li, .stMarkdown ol, .stMarkdown ul,
+    .stText, .stApp p, .stApp span {
+        color: #E0E0E0 !important;
+    }
+    .stMarkdown h1, .stMarkdown h2, .stMarkdown h3,
+    .stMarkdown h4, .stMarkdown h5, .stMarkdown h6 {
+        color: #FFFFFF !important;
+    }
+    .stMarkdown strong, .stMarkdown b {
+        color: #FFFFFF !important;
+    }
+    .stMarkdown a {
+        color: #00E5FF !important;
+    }
+
+    /* Input labels and helper text */
+    .stSelectbox label, .stSlider label, .stNumberInput label,
+    .stTextArea label, .stTextInput label, .stDateInput label,
+    .stTimeInput label, .stCheckbox label, .stRadio label,
+    .stMultiSelect label, .stFileUploader label,
+    .stColorPicker label {
+        color: #B0BEC5 !important;
+    }
+    .stSelectbox [data-baseweb="select"] span,
+    .stMultiSelect [data-baseweb="select"] span {
+        color: #E0E0E0 !important;
+    }
+    input, textarea, select {
+        color: #E0E0E0 !important;
+    }
+    .stTextInput input, .stNumberInput input,
+    .stTextArea textarea, .stDateInput input,
+    .stTimeInput input {
+        color: #E0E0E0 !important;
+    }
+
+    /* Radio buttons & checkboxes */
+    .stRadio > div > label > div:last-child,
+    .stCheckbox > label > div:last-child {
+        color: #E0E0E0 !important;
+    }
+    .stRadio > div[role="radiogroup"] label p,
+    .stRadio > div[role="radiogroup"] label span,
+    .stRadio > div[role="radiogroup"] label div {
+        color: #E0E0E0 !important;
+    }
+
+    /* Expanders */
+    .streamlit-expanderHeader, .streamlit-expanderHeader p,
+    details summary span, details summary p {
+        color: #E0E0E0 !important;
+    }
+    [data-testid="stExpander"] summary span {
+        color: #E0E0E0 !important;
+    }
+    [data-testid="stExpander"] div[data-testid="stMarkdownContainer"] p {
+        color: #E0E0E0 !important;
+    }
+
+    /* Tabs */
+    .stTabs [data-baseweb="tab-list"] button,
+    .stTabs [data-baseweb="tab"] {
+        color: #B0BEC5 !important;
+    }
+    .stTabs [aria-selected="true"] {
+        color: #00E5FF !important;
+    }
+
+    /* Toast / Alert messages */
+    .stAlert p, .stAlert span,
+    div[data-testid="stNotification"] p,
+    div[data-testid="stNotification"] span,
+    .stSuccess p, .stInfo p, .stWarning p, .stError p,
+    .stException p {
+        color: #E0E0E0 !important;
+    }
+
+    /* Sidebar text */
+    section[data-testid="stSidebar"] p,
+    section[data-testid="stSidebar"] span,
+    section[data-testid="stSidebar"] label,
+    section[data-testid="stSidebar"] li,
+    section[data-testid="stSidebar"] div {
+        color: #B0BEC5 !important;
+    }
+    section[data-testid="stSidebar"] .stMarkdown h1,
+    section[data-testid="stSidebar"] .stMarkdown h2,
+    section[data-testid="stSidebar"] .stMarkdown h3 {
+        color: #00E5FF !important;
+    }
+
+    /* Selectbox / dropdown option text */
+    [data-baseweb="popover"] li,
+    [data-baseweb="menu"] li,
+    [data-baseweb="popover"] ul li div,
+    [data-baseweb="menu"] ul li div {
+        color: #E0E0E0 !important;
+    }
+
+    /* Slider value text */
+    .stSlider div[data-testid="stTickBarMin"],
+    .stSlider div[data-testid="stTickBarMax"],
+    .stSlider [data-baseweb="slider"] div {
+        color: #B0BEC5 !important;
+    }
+
+    /* DataFrame / table text */
+    .stDataFrame td, .stDataFrame th,
+    .stTable td, .stTable th {
+        color: #E0E0E0 !important;
+    }
+
+    /* Download button text */
+    .stDownloadButton button span {
+        color: #FFFFFF !important;
+    }
+
+    /* Spinner text */
+    .stSpinner > div > span {
+        color: #E0E0E0 !important;
+    }
+
+    /* Progress bar text */
+    .stProgress > div > div > div > div {
+        color: #E0E0E0 !important;
+    }
+
+    /* Caption and small text */
+    .stCaption, small, .stApp small {
+        color: #90A4AE !important;
+    }
+
     /* Hide Streamlit components */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
