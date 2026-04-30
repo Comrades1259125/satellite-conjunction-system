@@ -232,7 +232,7 @@ st.markdown("""
     }
     .stSelectbox [data-baseweb="select"] span,
     .stMultiSelect [data-baseweb="select"] span {
-        color: #E0E0E0 !important;
+        color: #000000 !important;
     }
     input, textarea, select {
         color: #E0E0E0 !important;
