@@ -235,23 +235,23 @@ st.markdown("""
         color: #000000 !important;
     }
     input, textarea, select {
-        color: #E0E0E0 !important;
+        color: #000000 !important;
     }
     .stTextInput input, .stNumberInput input,
     .stTextArea textarea, .stDateInput input,
     .stTimeInput input {
-        color: #E0E0E0 !important;
+        color: #000000 !important;
     }
 
     /* Radio buttons & checkboxes */
     .stRadio > div > label > div:last-child,
     .stCheckbox > label > div:last-child {
-        color: #E0E0E0 !important;
+        color: #000000 !important;
     }
     .stRadio > div[role="radiogroup"] label p,
     .stRadio > div[role="radiogroup"] label span,
     .stRadio > div[role="radiogroup"] label div {
-        color: #E0E0E0 !important;
+        color: #000000 !important;
     }
 
     /* Expanders */
@@ -303,7 +303,7 @@ st.markdown("""
     [data-baseweb="menu"] li,
     [data-baseweb="popover"] ul li div,
     [data-baseweb="menu"] ul li div {
-        color: #E0E0E0 !important;
+        color: #000000 !important;
     }
 
     /* Slider value text */
