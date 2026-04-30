@@ -298,6 +298,34 @@ st.markdown("""
         color: #00E5FF !important;
     }
 
+    /* Sidebar selectbox / input text — force black on light widget backgrounds */
+    section[data-testid="stSidebar"] .stSelectbox [data-baseweb="select"] span,
+    section[data-testid="stSidebar"] .stMultiSelect [data-baseweb="select"] span,
+    section[data-testid="stSidebar"] .stSelectbox [data-baseweb="select"] div,
+    section[data-testid="stSidebar"] .stNumberInput input,
+    section[data-testid="stSidebar"] .stTextInput input,
+    section[data-testid="stSidebar"] .stTextArea textarea,
+    section[data-testid="stSidebar"] .stDateInput input,
+    section[data-testid="stSidebar"] .stTimeInput input,
+    section[data-testid="stSidebar"] input,
+    section[data-testid="stSidebar"] textarea,
+    section[data-testid="stSidebar"] select {
+        color: #000000 !important;
+    }
+    /* Sidebar slider value text */
+    section[data-testid="stSidebar"] .stSlider div[data-testid="stTickBarMin"],
+    section[data-testid="stSidebar"] .stSlider div[data-testid="stTickBarMax"],
+    section[data-testid="stSidebar"] .stSlider [data-baseweb="slider"] div[role="slider"],
+    section[data-testid="stSidebar"] .stSlider [data-baseweb="slider"] div[data-testid="stThumbValue"] {
+        color: #000000 !important;
+    }
+    /* Sidebar radio button text */
+    section[data-testid="stSidebar"] .stRadio > div[role="radiogroup"] label p,
+    section[data-testid="stSidebar"] .stRadio > div[role="radiogroup"] label span,
+    section[data-testid="stSidebar"] .stRadio > div[role="radiogroup"] label div {
+        color: #000000 !important;
+    }
+
     /* Selectbox / dropdown option text */
     [data-baseweb="popover"] li,
     [data-baseweb="menu"] li,
